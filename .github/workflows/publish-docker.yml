@@ -1,0 +1,168 @@
+name: 🐳 Docker Images
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+    paths:
+      - 'src/**'
+  schedule:
+    - cron: '0 0 * * 0'
+
+env:
+    Repository: dublok/openssh-server
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+        SHA_SHORT: ${{ steps.fetch-sha.outputs.SHA_SHORT }}
+        BRANCH_NAME: ${{ steps.extract-branch-name.outputs.BRANCH_NAME }}
+    strategy:
+      matrix:
+        platform: [amd64, arm64] # arm64, s390x
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Fetch Commit SHA
+        id: fetch-sha
+        run: |
+            echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+            echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Extract Branch Name
+        id: extract-branch-name
+        run: |
+            echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+            echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_OUTPUT
+
+      - name: ENV Variables
+        run: |
+          source $GITHUB_ENV
+          echo "BRANCH_NAME: ${BRANCH_NAME}"
+          echo "SHA_SHORT: ${SHA_SHORT}"
+          echo "GITHUB_REF_NAME: ${GITHUB_REF_NAME}"
+
+      - name: Define Tags
+        run: |
+          source $GITHUB_ENV
+          TEMP_TAGS="${{ env.Repository }}:${SHA_SHORT}-${{ matrix.platform }}"
+          echo "TEMP_TAGS=${TEMP_TAGS}" >> $GITHUB_ENV
+          
+      - name: Tags
+        run: |
+          source $GITHUB_ENV
+          echo "TEMP_TAGS: ${TEMP_TAGS}"
+          
+      - name: Set Build Args
+        run: |
+          echo "BUILD_ARGS=TARGETPLATFORM=${{ matrix.platform }}" >> $GITHUB_ENV
+          if [ "${{ matrix.platform }}" == "amd64" ]; then
+            echo "BUILD_ARGS=${{ env.BUILD_ARGS }} ARCH=x86_64" >> $GITHUB_ENV
+          elif [ "${{ matrix.platform }}" == "arm64" ]; then
+            echo "BUILD_ARGS=${{ env.BUILD_ARGS }} ARCH=aarch64" >> $GITHUB_ENV
+          fi
+          
+      - name: Print Build Args
+        run: |
+          source $GITHUB_ENV
+          echo "BUILD_ARGS: ${BUILD_ARGS}"
+
+      - name: Build and Push Docker Images
+        uses: docker/build-push-action@v5.0.0
+        with:
+          context: ./src
+          file: ./src/Dockerfile
+          push: true
+          platforms: ${{ matrix.platform }}
+          tags: ${{ env.TEMP_TAGS }}
+          build-args: ${{ env.BUILD_ARGS }}
+
+  create-and-push-manifest:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    env:
+        SHA_SHORT: ${{ needs.build-and-push.outputs.SHA_SHORT }}
+        BRANCH_NAME: ${{ needs.build-and-push.outputs.BRANCH_NAME }}
+    steps:
+      - name: Print ENV Variables
+        run: |
+          echo "SHA_SHORT: ${{ env.SHA_SHORT }}"
+          echo "BRANCH_NAME: ${{ env.BRANCH_NAME }}"
+          echo "GITHUB_REF_NAME: ${GITHUB_REF_NAME}"
+
+      - name: Fetch Tags from Docker Hub
+        id: fetch-tags
+        run: |
+          SHA_SHORT=${{ env.SHA_SHORT }}
+          RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}" "https://hub.docker.com/v2/repositories/${{ env.Repository }}/tags?name=$SHA_SHORT")
+          TAGS=$(echo $RESPONSE | jq -r '.results[].name' | tr '\n' ',' | sed 's/,$//')
+          echo "Fetched tags: $TAGS"
+          echo "TAGS=$TAGS" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+  
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        id: create_manifest
+        run: |
+            TAGS=${{ env.TAGS }}
+            IFS=',' read -r -a TAG_ARRAY <<< "$TAGS"
+            IMAGETOOLS_CMD="docker buildx imagetools create --tag ${{ env.Repository }}:${{ env.SHA_SHORT }} --tag ${{ env.Repository }}:${GITHUB_REF_NAME} "
+            
+            IMAGE_LIST="${{ env.Repository }}:${{ env.SHA_SHORT }},${{ env.Repository }}:${GITHUB_REF_NAME}"
+            
+            if [[ "${GITHUB_REF_NAME}" == v* ]]; then
+              if [[ "${GITHUB_REF_NAME}" == *alpha* || "${GITHUB_REF_NAME}" == *a* ]]; then
+                IMAGETOOLS_CMD+="--tag ${{ env.Repository }}-alpha "
+                IMAGE_LIST+=",${{ env.Repository }}:alpha"
+              elif [[ "${GITHUB_REF_NAME}" == *beta* || "${GITHUB_REF_NAME}" == *b* ]]; then
+                IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:beta "
+                IMAGE_LIST+=",${{ env.Repository }}:beta"
+              else
+                IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:latest "
+                IMAGE_LIST+=",${{ env.Repository }}:latest"
+              fi
+            fi
+            
+            for TAG in "${TAG_ARRAY[@]}"; do
+              IMAGETOOLS_CMD+="${{ env.Repository }}:$TAG "
+            done
+            
+            echo "IMAGE_LIST=$IMAGE_LIST" >> $GITHUB_ENV
+            echo "Running command: $IMAGETOOLS_CMD"
+            eval $IMAGETOOLS_CMD
+  
+      - name: Run Docker Package Versions Action
+        uses: DockForge/SBOMinify@latest
+        with:
+          images: ${{ env.IMAGE_LIST }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          output_path: "sboms"
+          sbom_file_prefix: ""
+          sbom_file_suffix: ""
+          sbom_file_name: "[TAG]"
+          

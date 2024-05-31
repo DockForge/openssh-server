@@ -1,0 +1,40 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+USER_NAME=${USER_NAME:-dockforge}
+
+PUID=${PUID:-911}
+PGID=${PGID:-911}
+
+if [[ "$USER_NAME" != "abc" ]]; then
+    usermod -l "$USER_NAME" abc
+    groupmod -n "$USER_NAME" abc
+fi
+
+groupmod -o -g "$PGID" "$USER_NAME"
+usermod -o -u "$PUID" "$USER_NAME"
+
+cat /etc/s6-overlay/s6-rc.d/init-adduser/branding
+
+
+echo '
+To support DUBLOK, visit:
+https://www.dublok.com/
+
+───────────────────────────────────────
+GID/UID
+───────────────────────────────────────'
+echo "
+User UID:    $(id -u "${USER_NAME}")
+User GID:    $(id -g "${USER_NAME}")
+───────────────────────────────────────"
+if [[ -f /build_version ]]; then
+    cat /build_version
+    echo '
+───────────────────────────────────────
+    '
+fi
+
+dockforgeown "${USER_NAME}":"${USER_NAME}" /app
+dockforgeown "${USER_NAME}":"${USER_NAME}" /config
+dockforgeown "${USER_NAME}":"${USER_NAME}" /defaults
