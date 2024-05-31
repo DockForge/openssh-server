@@ -10,7 +10,6 @@ LABEL build_version="DockForge version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="Dublok"
 ARG TARGETPLATFORM=""
 ARG ARCH=""
-ARG Alpine_Version="v3.19"
 
 RUN echo "Building for platform: ${TARGETPLATFORM}"
 RUN echo "Architecture set to: ${ARCH}"
@@ -24,7 +23,7 @@ RUN \
     sudo && \
   echo "**** install openssh-server ****" && \
   if [ -z ${OPENSSH_RELEASE+x} ]; then \
-    OPENSSH_RELEASE=$(curl -sL "http://dl-cdn.alpinelinux.org/alpine/${Alpine_Version}/main/${ARCH}/APKINDEX.tar.gz" | tar -xz -C /tmp && \
+    OPENSSH_RELEASE=$(curl -sL "http://dl-cdn.alpinelinux.org/alpine/v3.20/main/${ARCH}/APKINDEX.tar.gz" | tar -xz -C /tmp && \
     awk '/^P:openssh-server-pam$/,/V:/' /tmp/APKINDEX | sed -n 2p | sed 's/^V://'); \
   fi && \
   apk add --no-cache \
