@@ -28,15 +28,15 @@ RUN \
     awk '/^P:openssh-server-pam$/,/V:/' /tmp/APKINDEX | sed -n 2p | sed 's/^V://'); \
   fi && \
   apk add --no-cache \
-    openssh-client==${OPENSSH_RELEASE} \
-    openssh-server-pam==${OPENSSH_RELEASE} \
-    openssh-sftp-server==${OPENSSH_RELEASE} && \
+    openssh-client="${OPENSSH_RELEASE}" \
+    openssh-server-pam="${OPENSSH_RELEASE}" \
+    openssh-sftp-server="${OPENSSH_RELEASE}" && \
   echo "**** setup openssh environment ****" && \
   sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config && \
   usermod --shell /bin/bash abc && \
   rm -rf \
     /tmp/* \
-    $HOME/.cache
+    /root/.cache
 
 # add local files
 COPY /root /
