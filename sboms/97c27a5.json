@@ -52611,15 +52611,14 @@
   "source": {
     "id": "653f52f235feb4b0d4a0f3aa17b3bf318a9e19698d226aaca5125969469f2e0c",
     "name": "dublok/openssh-server",
-    "version": "main",
+    "version": "97c27a5",
     "type": "image",
     "metadata": {
-      "userInput": "dublok/openssh-server:main",
+      "userInput": "dublok/openssh-server:97c27a5",
       "imageID": "sha256:2b7d346a5fba0ad520f7d0339954003ae650cf95ae955e325de9b1f933a5a114",
       "manifestDigest": "sha256:653f52f235feb4b0d4a0f3aa17b3bf318a9e19698d226aaca5125969469f2e0c",
       "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
       "tags": [
-        "dublok/openssh-server:main",
         "dublok/openssh-server:97c27a5"
       ],
       "imageSize": 34084816,
