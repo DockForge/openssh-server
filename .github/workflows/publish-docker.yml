@@ -131,9 +131,9 @@ jobs:
         run: |
               TAGS=${{ env.TAGS }}
               IFS=',' read -r -a TAG_ARRAY <<< "$TAGS"
-              IMAGETOOLS_CMD="docker buildx imagetools create --tag ${{ env.Repository }}:${{ env.BaseOS }}-${{ env.SHA_SHORT }} --tag ${{ env.Repository }}:${{ env.BaseOS }}-${GITHUB_REF_NAME} "
+              IMAGETOOLS_CMD="docker buildx imagetools create --tag ${{ env.Repository }}:${{ env.SHA_SHORT }} --tag ${{ env.Repository }}:${GITHUB_REF_NAME} "
               
-              IMAGE_LIST="${{ env.Repository }}:${{ env.BaseOS }}-${{ env.SHA_SHORT }},${{ env.Repository }}:${{ env.BaseOS }}-${GITHUB_REF_NAME}"
+              IMAGE_LIST="${{ env.Repository }}:${{ env.SHA_SHORT }},${{ env.Repository }}:${GITHUB_REF_NAME}"
               
               if [[ "${GITHUB_REF_NAME}" == v* ]]; then
                 # Extract major version (e.g., v1 from v1.0.2, v1.0.2.1, etc.)
@@ -141,18 +141,16 @@ jobs:
                   MAJOR_VERSION="v${BASH_REMATCH[1]}"
                   
                   if [[ "${GITHUB_REF_NAME}" =~ [aA]$ ]]; then
-                    IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:${{ env.BaseOS }}-${MAJOR_VERSION}-alpha "
-                    IMAGE_LIST+=",${{ env.Repository }}:${{ env.BaseOS }}-${MAJOR_VERSION}-alpha"
+                    IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:${MAJOR_VERSION}-alpha "
+                    IMAGE_LIST+=",${{ env.Repository }}:${MAJOR_VERSION}-alpha"
                   elif [[ "${GITHUB_REF_NAME}" =~ [bB]$ ]]; then
-                    IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:${{ env.BaseOS }}-${MAJOR_VERSION}-beta "
-                    IMAGE_LIST+=",${{ env.Repository }}:${{ env.BaseOS }}-${MAJOR_VERSION}-beta"
+                    IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:${MAJOR_VERSION}-beta "
+                    IMAGE_LIST+=",${{ env.Repository }}:${MAJOR_VERSION}-beta"
                   else
-                    IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:${{ env.BaseOS }}-${MAJOR_VERSION} "
-                    IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:${{ env.BaseOS }}-latest "
-                    IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:${{ env.BaseOS }} "
-                    IMAGE_LIST+=",${{ env.Repository }}:${{ env.BaseOS }}-${MAJOR_VERSION}"
-                    IMAGE_LIST+=",${{ env.Repository }}:${{ env.BaseOS }}-latest"
-                    IMAGE_LIST+=",${{ env.Repository }}:${{ env.BaseOS }}"
+                    IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:${MAJOR_VERSION} "
+                    IMAGETOOLS_CMD+="--tag ${{ env.Repository }}:latest "
+                    IMAGE_LIST+=",${{ env.Repository }}:${MAJOR_VERSION}"
+                    IMAGE_LIST+=",${{ env.Repository }}:latest"
                   fi
                 fi
               fi
