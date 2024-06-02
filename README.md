@@ -102,7 +102,7 @@ docker run -d \
   -e PASSWORD_ACCESS=false `#optional` \
   -e USER_PASSWORD=password `#optional` \
   -e USER_PASSWORD_FILE=/path/to/file `#optional` \
-  -e USER_NAME=dockforge.io `#optional` \
+  -e USER_NAME=dockforge `#optional` \
   -e LOG_STDOUT= `#optional` \
   -p 2222:2222 \
   -v /path/to/openssh-server/config:/config \
