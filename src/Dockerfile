@@ -41,6 +41,10 @@ RUN \
 # add local files
 COPY /root /
 
+# Ensure correct permissions for all scripts in s6-overlay directory
+RUN find /etc/s6-overlay/ -type f -exec chmod 744 {} \; && \
+    chmod 744 /docker-mods
+
 EXPOSE 2222
 
 VOLUME /config
