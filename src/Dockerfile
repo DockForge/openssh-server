@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM dublok/base-linux:alpine
+FROM dublok/base-linux:alpine-v1
 
 # set version label
 ARG BUILD_DATE
