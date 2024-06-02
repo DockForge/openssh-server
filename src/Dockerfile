@@ -6,7 +6,7 @@ FROM dublok/base-linux:alpine-v1
 ARG BUILD_DATE
 ARG VERSION
 ARG OPENSSH_RELEASE
-LABEL build_version="DockForge version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL build_version="Version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="Dublok"
 ARG TARGETPLATFORM=""
 ARG ARCH=""
@@ -30,7 +30,7 @@ RUN \
     openssh-client==${OPENSSH_RELEASE} \
     openssh-server-pam==${OPENSSH_RELEASE} \
     openssh-sftp-server==${OPENSSH_RELEASE} && \
-  printf "DockForge version: ${VERSION}\nBuild-date: ${BUILD_DATE}" > /build_version && \
+  printf "Version: ${VERSION}\nBuild-date: ${BUILD_DATE}" > /build_version && \
   echo "**** setup openssh environment ****" && \
   sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config && \
   usermod --shell /bin/bash abc && \
