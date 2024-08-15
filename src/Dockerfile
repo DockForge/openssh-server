@@ -10,6 +10,7 @@ LABEL build_version="Version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="Dublok"
 ARG TARGETPLATFORM=""
 ARG ARCH=""
+LABEL org.opencontainers.image.source https://github.com/DockForge/openssh-server
 
 RUN echo "Building for platform: ${TARGETPLATFORM}"
 RUN echo "Architecture set to: ${ARCH}"
