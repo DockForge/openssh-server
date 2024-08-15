@@ -1,6 +1,10 @@
 # syntax=docker/dockerfile:1
 
 FROM dublok/base-linux:alpine-v1
+LABEL org.opencontainers.image.source=""
+LABEL org.opencontainers.image.source=https://github.com/DockForge/openssh-server
+LABEL org.opencontainers.image.description="OpenSSH-Server is a Docker container designed to provide secure SSH access in a sandboxed environment. By isolating SSH access within the container, this project ensures that users can only access specified folders and processes, enhancing security compared to traditional SSH access methods."
+LABEL org.opencontainers.image.licenses=GPL-3.0
 
 # set version label
 ARG BUILD_DATE
@@ -10,9 +14,6 @@ LABEL build_version="Version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="Dublok"
 ARG TARGETPLATFORM=""
 ARG ARCH=""
-LABEL org.opencontainers.image.source=https://github.com/DockForge/openssh-server
-LABEL org.opencontainers.image.description="OpenSSH-Server is a Docker container designed to provide secure SSH access in a sandboxed environment. By isolating SSH access within the container, this project ensures that users can only access specified folders and processes, enhancing security compared to traditional SSH access methods."
-LABEL org.opencontainers.image.licenses=GPL-3.0
 
 RUN echo "Building for platform: ${TARGETPLATFORM}"
 RUN echo "Architecture set to: ${ARCH}"
