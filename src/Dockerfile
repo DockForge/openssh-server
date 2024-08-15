@@ -39,7 +39,7 @@ RUN \
     $HOME/.cache
 
 # add local files
-COPY /root /
+COPY src/root /
 
 # Ensure correct permissions for all scripts in s6-overlay directory
 RUN find /etc/s6-overlay/ -type f -exec chmod 744 {} \; && \
